@@ -1,7 +1,7 @@
 import { build, context } from "esbuild";
 
 const options = {
-    entryPoints: ["src/index.tsx"],
+    entryPoints: ["src/routing-example.tsx"],
     bundle: true,
     outfile: "dist/index.js",
     format: "esm",
@@ -17,7 +17,12 @@ const options = {
 if (process.argv.includes("--watch")) {
     const ctx = await context(options);
     await ctx.watch();
-    console.log("Watching for changes...");
+    await ctx.serve({
+        servedir: ".",
+        port: 3001,
+        fallback: "index.html"
+    });
+    console.log("Dev server running at http://localhost:3001");
 } else {
     await build(options);
     console.log("Build complete!");
