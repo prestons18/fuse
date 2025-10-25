@@ -1,10 +1,34 @@
 /** @jsx h */
 import { h, render } from "./fuse/dom";
 import { Router, ApiRouter, RouteParams, createLink } from "./fuse/router";
+import { signal } from "./fuse/reactivity";
 
 const router = new Router();
 const api = new ApiRouter();
 const Link = createLink(router);
+
+const isAuthenticated = signal(false);
+
+router.addMiddleware((context, next) => {
+    console.log(`Navigating from ${context.from} to ${context.to}`);
+    next();
+});
+
+router.addGuard('/users/:id', (context) => {
+    if (!isAuthenticated.value) {
+        console.log('Access denied: User not authenticated');
+        return { allow: false, redirect: '/login' };
+    }
+    return true;
+});
+
+router.addGuard('/posts/:postId', (context) => {
+    if (!isAuthenticated.value) {
+        console.log('Access denied: Post requires authentication');
+        return { allow: false, redirect: '/login' };
+    }
+    return true;
+});
 
 // Register API routes
 api.get('/api/users/:id', (params: RouteParams, query: RouteParams) => {
@@ -83,6 +107,25 @@ function PostPage() {
     );
 }
 
+function LoginPage() {
+    return (
+        <div className="page">
+            <h1>Login</h1>
+            <p>Auth Status: {() => isAuthenticated.value ? 'Logged In' : 'Logged Out'}</p>
+            <button onClick={() => {
+                isAuthenticated.value = !isAuthenticated.value;
+                if (isAuthenticated.value) {
+                    router.navigate('/');
+                }
+            }}>
+                {() => isAuthenticated.value ? 'Logout' : 'Login'}
+            </button>
+            <br /><br />
+            <Link href="/">Back to Home</Link>
+        </div>
+    );
+}
+
 function NotFoundPage() {
     return (
         <div className="page">
@@ -96,6 +139,7 @@ function NotFoundPage() {
 const routes: Record<string, () => Node> = {
     "/": HomePage,
     "/about": AboutPage,
+    "/login": LoginPage,
     "/users/:id": UserPage,
     "/posts/:postId": PostPage,
 };
@@ -131,10 +175,14 @@ function App() {
                 <nav className="main-nav">
                     <Link href="/">Home</Link>
                     <Link href="/about">About</Link>
+                    <Link href="/login">Login</Link>
                     <Link href="/users/42">User 42</Link>
                     <Link href="/posts/999">Post 999</Link>
                     <button onClick={() => router.back()}>← Back</button>
                     <button onClick={() => router.forward()}>Forward →</button>
+                    <span style="margin-left: auto;">
+                        {() => isAuthenticated.value ? '🔓 Authenticated' : '🔒 Guest'}
+                    </span>
                 </nav>
             </header>
             
