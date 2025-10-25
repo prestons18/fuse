@@ -1,4 +1,3 @@
-/** @jsx h */
 import { h, render } from "./fuse/dom";
 import { Router, ApiRouter, RouteParams, createLink } from "./fuse/router";
 import { signal } from "./fuse/reactivity";
