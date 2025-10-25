@@ -8,3 +8,18 @@ export function effect(fn: () => void) {
     }
     run();
 }
+
+export function signal<T>(value: T) {
+    const subscribers = new Set<() => void>();
+
+    return {
+        get() {
+            if (currentEffect) subscribers.add(currentEffect);
+            return value;
+        },
+        set(v: T) {
+            value = v;
+            subscribers.forEach((fn) => fn());
+        }
+    }
+}
