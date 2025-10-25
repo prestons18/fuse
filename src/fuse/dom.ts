@@ -2,6 +2,7 @@ import { effect } from "./reactivity";
 
 export function h(type: any, props: any, ...children: any[]) {
   if (typeof type === "function") return type({ ...props, children });
+  if (!type) return children.flat();
   
   const el = document.createElement(type);
   
@@ -26,5 +27,5 @@ export function h(type: any, props: any, ...children: any[]) {
 }
 
 export function render(vnode: any, container: HTMLElement) {
-  container.replaceChildren(vnode);
+  container.replaceChildren(...(Array.isArray(vnode) ? vnode : [vnode]));
 }
