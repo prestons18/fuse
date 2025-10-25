@@ -103,13 +103,14 @@ function NotFoundPage() {
     );
 }
 
-// Router component that renders based on current path
+const routes: Record<string, () => Node> = {
+    "/": HomePage,
+    "/about": AboutPage,
+    "/users/:id": UserPage,
+    "/posts/:postId": PostPage,
+};
+
 function RouterView() {
-    const homeMatch = router.match('/');
-    const aboutMatch = router.match('/about');
-    const userMatch = router.match('/users/:id');
-    const postMatch = router.match('/posts/:postId');
-    
     return (
         <div className="router-view">
             <div className="current-route">
@@ -117,23 +118,16 @@ function RouterView() {
             </div>
             
             {() => {
-                if (homeMatch.value && router.currentPath.value === '/') {
-                    return HomePage();
-                } else if (aboutMatch.value) {
-                    return AboutPage();
-                } else if (userMatch.value) {
-                    return UserPage();
-                } else if (postMatch.value) {
-                    return PostPage();
-                } else {
-                    return NotFoundPage();
+                for (const path in routes) {
+                    const match = router.match(path);
+                    if (match.value) return routes[path]();
                 }
+                return NotFoundPage();
             }}
         </div>
     );
 }
 
-// App with navigation
 function App() {
     return (
         <div className="app">
