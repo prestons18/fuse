@@ -36,4 +36,30 @@ export function render(vnode: any, container: HTMLElement) {
   container.replaceChildren(...(Array.isArray(vnode) ? vnode : [vnode]));
 }
 
-export const For = ({ each, children }: any) => (typeof each === "function" ? () => each().map(children[0]) : each.map(children[0]));
+export function For({ each, children }: any) {
+  const render = children[0];
+  if (typeof each !== "function") return each.map(render);
+  
+  const anchor = document.createTextNode("");
+  const map = new Map<any, Node>();
+  effect(() => {
+    const items = each();
+    const used = new Set();
+    items.forEach((item: any, i: number) => {
+      const key = item?.key ?? item;
+      used.add(key);
+      if (!map.has(key)) {
+        const node = render(item, i);
+        map.set(key, node);
+        anchor.parentNode?.insertBefore(node, anchor);
+      }
+    });
+    map.forEach((node, key) => {
+      if (!used.has(key)) {
+        node.parentNode?.removeChild(node);
+        map.delete(key);
+      }
+    });
+  });
+  return anchor;
+}
