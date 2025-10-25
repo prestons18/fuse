@@ -16,8 +16,14 @@ export function h(type: any, props: any, ...children: any[]) {
   const mount = (parent: HTMLElement, child: any): any => {
     if (Array.isArray(child)) return child.forEach((c) => mount(parent, c));
     if (typeof child === "function") {
-      const t = parent.appendChild(document.createTextNode(""));
-      return effect(() => (t.textContent = child()));
+      const anchor = parent.appendChild(document.createTextNode(""));
+      let nodes: Node[] = [];
+      return effect(() => {
+        const result = child();
+        nodes.forEach(n => parent.removeChild(n));
+        nodes = Array.isArray(result) ? result : [document.createTextNode(result)];
+        nodes.forEach(n => parent.insertBefore(n, anchor));
+      });
     }
     parent.appendChild(typeof child === "object" ? child : document.createTextNode(child));
   };
@@ -29,3 +35,5 @@ export function h(type: any, props: any, ...children: any[]) {
 export function render(vnode: any, container: HTMLElement) {
   container.replaceChildren(...(Array.isArray(vnode) ? vnode : [vnode]));
 }
+
+export const For = ({ each, children }: any) => (typeof each === "function" ? () => each().map(children[0]) : each.map(children[0]));
