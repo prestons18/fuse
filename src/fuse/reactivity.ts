@@ -50,4 +50,8 @@ export function signal<T>(value: T) {
     }
 }
 
-export const computed = <T>(fn: () => T) => { const s = signal(fn()); effect(() => s.set(fn())); return s; }
+export function computed<T>(fn: () => T) {
+    const s = signal<T>(undefined as T);
+    effect(() => s.set(fn()));
+    return { get: () => s.get() };
+}
