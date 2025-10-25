@@ -18,27 +18,27 @@ function TodoApp() {
   const filter = signal<"all" | "active" | "completed">("all");
   
   const filtered = computed(() => {
-    const list = todos.get();
-    const f = filter.get();
+    const list = todos.value;
+    const f = filter.value;
     if (f === "active") return list.filter(t => !t.completed);
     if (f === "completed") return list.filter(t => t.completed);
     return list;
   });
   
   const remaining = computed(() => 
-    todos.get().filter(t => !t.completed).length
+    todos.value.filter(t => !t.completed).length
   );
   
   const addTodo = (e: Event) => {
     e.preventDefault();
-    const text = input.get().trim();
+    const text = input.value.trim();
     if (!text) return;
     
-    todos.set([
-      ...todos.get(),
+    todos.value = [
+      ...todos.value,
       { id: Date.now(), text, completed: false }
-    ]);
-    input.set("");
+    ];
+    input.value = "";
   };
   
   const toggleTodo = (id: number) => {
@@ -65,28 +65,28 @@ function TodoApp() {
         <input
           type="text"
           placeholder="What needs to be done?"
-          value={() => input.get()}
-          onInput={(e: Event) => input.set((e.target as HTMLInputElement).value)}
+          value={input.value}
+          onInput={(e: Event) => input.value = (e.target as HTMLInputElement).value}
         />
         <button type="submit">Add</button>
       </form>
       
       <div className="filters">
         <button
-          className={() => filter.get() === "all" ? "active" : ""}
-          onClick={() => filter.set("all")}
+          className={() => filter.value === "all" ? "active" : ""}
+          onClick={() => filter.value = "all"}
         >
           All
         </button>
         <button
-          className={() => filter.get() === "active" ? "active" : ""}
-          onClick={() => filter.set("active")}
+          className={() => filter.value === "active" ? "active" : ""}
+          onClick={() => filter.value = "active"}
         >
           Active
         </button>
         <button
-          className={() => filter.get() === "completed" ? "active" : ""}
-          onClick={() => filter.set("completed")}
+          className={() => filter.value === "completed" ? "active" : ""}
+          onClick={() => filter.value = "completed"}
         >
           Completed
         </button>
@@ -94,7 +94,7 @@ function TodoApp() {
       
       <ul className="todo-list">
         {For({
-          each: () => filtered.get(),
+          each: () => filtered.value,
           children: [(todo: Todo) => {
             const li = (
               <li className={todo.completed ? "completed" : ""}>
@@ -119,7 +119,7 @@ function TodoApp() {
       
       <div className="footer">
         <span>
-          {() => `${remaining.get()} item${remaining.get() === 1 ? "" : "s"} left`}
+          {() => `${remaining.value} item${remaining.value === 1 ? "" : "s"} left`}
         </span>
         <button onClick={clearCompleted}>Clear completed</button>
       </div>
@@ -129,17 +129,17 @@ function TodoApp() {
 
 function CounterExample() {
   const count = signal(0);
-  const doubled = computed(() => count.get() * 2);
+  const doubled = computed(() => count.value * 2);
   
-  const interval = setInterval(() => count.set(count.get() + 1), 1000);
+  const interval = setInterval(() => count(count() + 1), 1000);
   onCleanup(() => clearInterval(interval));
   
   return (
     <div className="counter">
-      <h2>Auto Counter</h2>
-      <p>{() => `Count: ${count.get()}`}</p>
-      <p>{() => `Doubled: ${doubled.get()}`}</p>
-      <button onClick={() => count.set(0)}>Reset</button>
+      <h2>Counter</h2>
+      <p>{() => `Count: ${count.value}`}</p>
+      <p>{() => `Doubled: ${doubled.value}`}</p>
+      <button onClick={() => count.value = 0}>Reset</button>
     </div>
   );
 }
@@ -150,8 +150,8 @@ function ConditionalExample() {
   return (
     <div className="conditional">
       <h2>Conditional Rendering</h2>
-      <button onClick={() => show.set(!show.get())}>Toggle</button>
-      {() => show.get() ? <p>I'm visible!</p> : null}
+      <button onClick={() => show.value = !show.value}>Toggle</button>
+      {() => show.value ? <p>I'm visible!</p> : null}
     </div>
   );
 }
