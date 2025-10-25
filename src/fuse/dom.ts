@@ -66,6 +66,7 @@ export function For({ each, children }: any) {
   
   const anchor = document.createTextNode("");
   const map = new Map<any, { node: Node; item: any; update?: (v: any) => void }>();
+  
   const dispose = effect(() => {
     const items = each();
     const newKeys = new Set();
@@ -80,13 +81,18 @@ export function For({ each, children }: any) {
         const node = render(item, i);
         entry = { node, item };
         map.set(key, entry);
+        // Insert new node after prev
+        if (anchor.parentNode) {
+          anchor.parentNode.insertBefore(node, prev.nextSibling);
+        }
       } else if (entry.item !== item) {
         entry.update?.(item);
         entry.item = item;
       }
       
-      if (entry.node.previousSibling !== prev) {
-        anchor.parentNode?.insertBefore(entry.node, prev.nextSibling);
+      // Move node if it's not in the right position
+      if (entry.node.previousSibling !== prev && anchor.parentNode) {
+        anchor.parentNode.insertBefore(entry.node, prev.nextSibling);
       }
       prev = entry.node;
     });
@@ -99,6 +105,7 @@ export function For({ each, children }: any) {
       }
     });
   });
+  
   addDisposer(anchor, dispose);
   return anchor;
 }
