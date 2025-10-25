@@ -1,12 +1,38 @@
-let currentEffect: (() => void) | null = null; 
+let currentEffect: (() => void) | null = null;
+let currentCleanups: (() => void)[] = [];
 
-export function effect(fn: () => void) {
+export function effect(fn: () => void): () => void {
+    let cleanups: (() => void)[] = [];
+    
     const run = () => {
+        // Run existing cleanups before re-running effect
+        cleanups.forEach(cleanup => cleanup());
+        cleanups = [];
+        
         currentEffect = run;
+        currentCleanups = cleanups;
         fn();
         currentEffect = null;
+        currentCleanups = [];
     }
+    
     run();
+    
+    // Return dispose function
+    return () => {
+        cleanups.forEach(cleanup => cleanup());
+        cleanups = [];
+    };
+}
+
+export function onCleanup(fn: () => void) {
+    if (currentCleanups) {
+        currentCleanups.push(fn);
+    }
+}
+
+export function onMount(fn: () => void) {
+    fn();
 }
 
 export function signal<T>(value: T) {
