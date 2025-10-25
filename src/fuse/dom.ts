@@ -41,22 +41,35 @@ export function For({ each, children }: any) {
   if (typeof each !== "function") return each.map(render);
   
   const anchor = document.createTextNode("");
-  const map = new Map<any, Node>();
+  const map = new Map<any, { node: Node; item: any; update?: (v: any) => void }>();
   effect(() => {
     const items = each();
-    const used = new Set();
+    const newKeys = new Set();
+    let prev: Node = anchor;
+    
     items.forEach((item: any, i: number) => {
       const key = item?.key ?? item;
-      used.add(key);
-      if (!map.has(key)) {
+      newKeys.add(key);
+      let entry = map.get(key);
+      
+      if (!entry) {
         const node = render(item, i);
-        map.set(key, node);
-        anchor.parentNode?.insertBefore(node, anchor);
+        entry = { node, item };
+        map.set(key, entry);
+      } else if (entry.item !== item) {
+        entry.update?.(item);
+        entry.item = item;
       }
+      
+      if (entry.node.previousSibling !== prev) {
+        anchor.parentNode?.insertBefore(entry.node, prev.nextSibling);
+      }
+      prev = entry.node;
     });
-    map.forEach((node, key) => {
-      if (!used.has(key)) {
-        node.parentNode?.removeChild(node);
+    
+    map.forEach((entry, key) => {
+      if (!newKeys.has(key)) {
+        entry.node.parentNode?.removeChild(entry.node);
         map.delete(key);
       }
     });
