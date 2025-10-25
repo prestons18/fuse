@@ -28,9 +28,9 @@ function HomePage() {
             <h1>Home Page</h1>
             <p>Welcome to Fuse Router!</p>
             <nav>
-                {Link({ href: '/about', children: 'Go to About' })}
-                {Link({ href: '/users/123', children: 'View User 123' })}
-                {Link({ href: '/posts/456', children: 'View Post 456' })}
+                <Link href="/about">Go to About</Link>
+                <Link href="/users/123">View User 123</Link>
+                <Link href="/posts/456">View Post 456</Link>
             </nav>
         </div>
     );
@@ -41,7 +41,7 @@ function AboutPage() {
         <div className="page">
             <h1>About Page</h1>
             <p>This is a reactive routing example for Fuse.</p>
-            {Link({ href: '/', children: 'Back to Home' })}
+            <Link href="/">Back to Home</Link>
         </div>
     );
 }
@@ -58,7 +58,7 @@ function UserPage() {
                 console.log('API Result:', result);
             }}>Fetch User Data</button>
             <br /><br />
-            {Link({ href: '/', children: 'Back to Home' })}
+            <Link href="/">Back to Home</Link>
         </div>
     );
 }
@@ -78,7 +78,7 @@ function PostPage() {
                 console.log('API Result:', result);
             }}>Fetch Comments</button>
             <br /><br />
-            {Link({ href: '/', children: 'Back to Home' })}
+            <Link href="/">Back to Home</Link>
         </div>
     );
 }
@@ -88,7 +88,7 @@ function NotFoundPage() {
         <div className="page">
             <h1>404 - Not Found</h1>
             <p>{() => `Page "${router.currentPath.value}" not found`}</p>
-            {Link({ href: '/', children: 'Go Home' })}
+            <Link href="/">Go Home</Link>
         </div>
     );
 }
@@ -129,10 +129,10 @@ function App() {
             <header>
                 <h1>Fuse Router Demo</h1>
                 <nav className="main-nav">
-                    {Link({ href: '/', children: 'Home' })}
-                    {Link({ href: '/about', children: 'About' })}
-                    {Link({ href: '/users/42', children: 'User 42' })}
-                    {Link({ href: '/posts/999', children: 'Post 999' })}
+                    <Link href="/">Home</Link>
+                    <Link href="/about">About</Link>
+                    <Link href="/users/42">User 42</Link>
+                    <Link href="/posts/999">Post 999</Link>
                     <button onClick={() => router.back()}>← Back</button>
                     <button onClick={() => router.forward()}>Forward →</button>
                 </nav>

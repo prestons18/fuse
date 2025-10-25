@@ -8,7 +8,7 @@ export interface RouteComponentProps {
 
 export interface LinkProps {
   href: string;
-  children: Node | string;
+  children?: Node | string | (Node | string)[];
   className?: string;
 }
 
@@ -22,10 +22,20 @@ export function Link(props: LinkProps, router: Router): HTMLAnchorElement {
   a.href = props.href;
   if (props.className) a.className = props.className;
   
-  if (typeof props.children === 'string') {
-    a.textContent = props.children;
-  } else {
-    a.appendChild(props.children);
+  if (props.children) {
+    if (typeof props.children === 'string') {
+      a.textContent = props.children;
+    } else if (Array.isArray(props.children)) {
+      props.children.forEach(child => {
+        if (typeof child === 'string') {
+          a.appendChild(document.createTextNode(child));
+        } else {
+          a.appendChild(child);
+        }
+      });
+    } else {
+      a.appendChild(props.children);
+    }
   }
   
   a.addEventListener('click', e => {
@@ -37,5 +47,6 @@ export function Link(props: LinkProps, router: Router): HTMLAnchorElement {
 }
 
 export function createLink(router: Router) {
-  return (props: LinkProps) => Link(props, router);
+  const LinkComponent = (props: LinkProps) => Link(props, router);
+  return LinkComponent;
 }
