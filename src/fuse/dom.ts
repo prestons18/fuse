@@ -1,111 +1,206 @@
 import { effect } from "./reactivity";
 
-const disposers = new WeakMap<Node, (() => void)[]>();
+type Child = Node | string | number | boolean | null | undefined;
+type Children = Child | Child[] | (() => Child | Child[]);
+type Props = Record<string, any> & { children?: Children };
+type Component<P = any> = (props: P) => Node | Node[];
+type ElementType = string | Component | null;
 
-function addDisposer(node: Node, dispose: () => void) {
-  const list = disposers.get(node) || [];
-  list.push(dispose);
-  disposers.set(node, list);
+interface ForProps<T> {
+  each: T[] | (() => T[]);
+  children: [(item: T, index: number) => Node];
 }
 
-function cleanupNode(node: Node) {
-  const list = disposers.get(node);
-  if (list) {
-    list.forEach(dispose => dispose());
+const disposers = new WeakMap<Node, Set<() => void>>();
+
+function addDisposer(node: Node, dispose: () => void): void {
+  if (!disposers.has(node)) {
+    disposers.set(node, new Set());
+  }
+  disposers.get(node)!.add(dispose);
+}
+
+function cleanupNode(node: Node): void {
+  const nodeDisposers = disposers.get(node);
+  if (nodeDisposers) {
+    nodeDisposers.forEach(dispose => dispose());
     disposers.delete(node);
   }
 }
 
-export function h(type: any, props: any, ...children: any[]) {
-  if (typeof type === "function") return type({ ...props, children });
-  if (!type) return children.flat();
+function mountChild(parent: Node, child: Children, anchor?: Node): void {
+  if (child == null || child === false) return;
+  
+  if (Array.isArray(child)) {
+    child.forEach(c => mountChild(parent, c, anchor));
+    return;
+  }
+  
+  if (typeof child === "function") {
+    const marker = document.createTextNode("");
+    const insertBefore = anchor || null;
+    parent.insertBefore(marker, insertBefore);
+    
+    let mounted: Node[] = [];
+    
+    const dispose = effect(() => {
+      const result = child();
+      
+      mounted.forEach(node => {
+        cleanupNode(node);
+        node.parentNode?.removeChild(node);
+      });
+      mounted = [];
+      
+      if (result == null || result === false) return;
+      
+      const nodes = Array.isArray(result) ? result : [result];
+      nodes.forEach(node => {
+        const el = node instanceof Node ? node : document.createTextNode(String(node));
+        parent.insertBefore(el, marker);
+        mounted.push(el);
+      });
+    });
+    
+    addDisposer(marker, dispose);
+    return;
+  }
+  
+  const node = child instanceof Node ? child : document.createTextNode(String(child));
+  parent.insertBefore(node, anchor || null);
+}
+
+function setAttribute(el: HTMLElement, key: string, value: any): void {
+  if (key.startsWith("on")) {
+    const event = key.slice(2).toLowerCase();
+    el.addEventListener(event, value);
+    return;
+  }
+  
+  if (typeof value === "function") {
+    const dispose = effect(() => {
+      const resolved = value();
+      if (key === "className") {
+        el.className = resolved;
+      } else if (key in el) {
+        (el as any)[key] = resolved;
+      } else {
+        el.setAttribute(key, String(resolved));
+      }
+    });
+    addDisposer(el, dispose);
+    return;
+  }
+  
+  if (key === "className") {
+    el.className = value;
+  } else if (key in el) {
+    (el as any)[key] = value;
+  } else {
+    el.setAttribute(key, String(value));
+  }
+}
+
+export function h(
+  type: ElementType,
+  props: Props | null,
+  ...children: Children[]
+): Node | Node[] {
+  if (typeof type === "function") {
+    return type({ ...props, children });
+  }
+  
+  if (!type) {
+    const fragment = document.createDocumentFragment();
+    children.flat(Infinity).forEach(child => mountChild(fragment, child));
+    return fragment;
+  }
   
   const el = document.createElement(type);
   
-  for (const k in props) {
-    const v = props[k];
-    if (k.startsWith("on")) el.addEventListener(k.slice(2).toLowerCase(), v);
-    else if (typeof v === "function") {
-      const dispose = effect(() => (el[k] = v()));
-      addDisposer(el, dispose);
+  if (props) {
+    for (const key in props) {
+      if (key !== "children") {
+        setAttribute(el, key, props[key]);
+      }
     }
-    else el[k] = v;
   }
   
-  const mount = (parent: HTMLElement, child: any): any => {
-    if (Array.isArray(child)) return child.forEach((c) => mount(parent, c));
-    if (typeof child === "function") {
-      const anchor = parent.appendChild(document.createTextNode(""));
-      let nodes: Node[] = [];
-      const dispose = effect(() => {
-        const result = child();
-        nodes.forEach(n => {
-          cleanupNode(n);
-          parent.removeChild(n);
-        });
-        nodes = Array.isArray(result) ? result : [document.createTextNode(result)];
-        nodes.forEach(n => parent.insertBefore(n, anchor));
-      });
-      addDisposer(anchor, dispose);
-      return;
-    }
-    parent.appendChild(typeof child === "object" ? child : document.createTextNode(child));
-  };
+  children.flat(Infinity).forEach(child => mountChild(el, child));
   
-  children.flat().forEach((c) => mount(el, c));
   return el;
 }
 
-export function render(vnode: any, container: HTMLElement) {
-  container.replaceChildren(...(Array.isArray(vnode) ? vnode : [vnode]));
+export function render(vnode: Node | Node[], container: HTMLElement): void {
+  const nodes = Array.isArray(vnode) ? vnode : [vnode];
+  container.replaceChildren(...nodes);
 }
 
-export function For({ each, children }: any) {
-  const render = children[0];
-  if (typeof each !== "function") return each.map(render);
+export function For<T>({ each, children }: ForProps<T>): Node {
+  const renderItem = children[0];
   
-  const anchor = document.createTextNode("");
-  const map = new Map<any, { node: Node; item: any; update?: (v: any) => void }>();
+  if (typeof each !== "function") {
+    const fragment = document.createDocumentFragment();
+    each.forEach((item, i) => fragment.appendChild(renderItem(item, i)));
+    return fragment;
+  }
+  
+  const marker = document.createTextNode("");
+  const tracked = new Map<any, { node: Node; item: T }>();
+  let isFirstRun = true;
   
   const dispose = effect(() => {
     const items = each();
-    const newKeys = new Set();
-    let prev: Node = anchor;
+    const seen = new Set<any>();
+    let prev: Node = marker;
+    const nodesToInsert: Array<{ node: Node; after: Node }> = [];
     
-    items.forEach((item: any, i: number) => {
-      const key = item?.key ?? item;
-      newKeys.add(key);
-      let entry = map.get(key);
+    items.forEach((item, index) => {
+      const key = (item as any)?.key ?? item;
+      seen.add(key);
+      
+      let entry = tracked.get(key);
       
       if (!entry) {
-        const node = render(item, i);
+        const node = renderItem(item, index);
         entry = { node, item };
-        map.set(key, entry);
-        // Insert new node after prev
-        if (anchor.parentNode) {
-          anchor.parentNode.insertBefore(node, prev.nextSibling);
-        }
-      } else if (entry.item !== item) {
-        entry.update?.(item);
-        entry.item = item;
+        tracked.set(key, entry);
       }
       
-      // Move node if it's not in the right position
-      if (entry.node.previousSibling !== prev && anchor.parentNode) {
-        anchor.parentNode.insertBefore(entry.node, prev.nextSibling);
+      // Track nodes that need insertion
+      if (entry.node.previousSibling !== prev) {
+        if (isFirstRun) {
+          nodesToInsert.push({ node: entry.node, after: prev });
+        } else if (marker.parentNode) {
+          marker.parentNode.insertBefore(entry.node, prev.nextSibling);
+        }
       }
+      
       prev = entry.node;
     });
     
-    map.forEach((entry, key) => {
-      if (!newKeys.has(key)) {
+    // On first run, defer insertion until marker is in DOM
+    if (isFirstRun && nodesToInsert.length > 0) {
+      queueMicrotask(() => {
+        if (marker.parentNode) {
+          nodesToInsert.forEach(({ node, after }) => {
+            marker.parentNode!.insertBefore(node, after.nextSibling);
+          });
+        }
+      });
+    }
+    
+    tracked.forEach((entry, key) => {
+      if (!seen.has(key)) {
         cleanupNode(entry.node);
         entry.node.parentNode?.removeChild(entry.node);
-        map.delete(key);
+        tracked.delete(key);
       }
     });
+    
+    isFirstRun = false;
   });
   
-  addDisposer(anchor, dispose);
-  return anchor;
+  addDisposer(marker, dispose);
+  return marker;
 }
