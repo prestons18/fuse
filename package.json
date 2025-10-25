@@ -12,6 +12,7 @@
   "author": "Preston Arnold",
   "license": "ISC",
   "devDependencies": {
+    "tsx": "^4.20.6",
     "typescript": "latest"
   }
 }
