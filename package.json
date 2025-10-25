@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "node build.mjs --watch",
-    "build": "node build.mjs",
-    "serve": "npx serve ."
+    "build": "node build.mjs"
   },
   "keywords": [],
   "author": "Preston Arnold",
