@@ -23,3 +23,5 @@ export function signal<T>(value: T) {
         }
     }
 }
+
+export const computed = <T>(fn: () => T) => { const s = signal(fn()); effect(() => s.set(fn())); return s; }
