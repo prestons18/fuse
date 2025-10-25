@@ -4,8 +4,8 @@
     "module": "ESNext",
     "lib": ["DOM", "ESNext"],
     "moduleResolution": "Node",
-    "jsx": "react-jsx",
-    "jsxImportSource": "./src/fuse", 
+    "jsx": "react",
+    "jsxFactory": "h", 
 
     "strict": true,
     "noImplicitAny": true,
