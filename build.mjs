@@ -1,6 +1,6 @@
-import { build } from "esbuild";
+import { build, context } from "esbuild";
 
-await build({
+const options = {
     entryPoints: ["src/index.tsx"],
     bundle: true,
     outfile: "dist/index.js",
@@ -12,5 +12,13 @@ await build({
     jsxImportSource: "./src/fuse",
     platform: "browser",
     minify: false,
-    watch: process.argv.includes("--watch"),
-});
+};
+
+if (process.argv.includes("--watch")) {
+    const ctx = await context(options);
+    await ctx.watch();
+    console.log("Watching for changes...");
+} else {
+    await build(options);
+    console.log("Build complete!");
+}
