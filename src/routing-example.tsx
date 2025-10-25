@@ -1,9 +1,10 @@
 /** @jsx h */
 import { h, render } from "./fuse/dom";
-import { Router, ApiRouter, RouteParams } from "./fuse/router";
+import { Router, ApiRouter, RouteParams, createLink } from "./fuse/router";
 
 const router = new Router();
 const api = new ApiRouter();
+const Link = createLink(router);
 
 // Register API routes
 api.get('/api/users/:id', (params: RouteParams, query: RouteParams) => {
@@ -27,20 +28,9 @@ function HomePage() {
             <h1>Home Page</h1>
             <p>Welcome to Fuse Router!</p>
             <nav>
-                <a href="/about" onClick={(e: Event) => {
-                    e.preventDefault();
-                    router.navigate('/about');
-                }}>Go to About</a>
-                {' | '}
-                <a href="/users/123" onClick={(e: Event) => {
-                    e.preventDefault();
-                    router.navigate('/users/123');
-                }}>View User 123</a>
-                {' | '}
-                <a href="/posts/456" onClick={(e: Event) => {
-                    e.preventDefault();
-                    router.navigate('/posts/456');
-                }}>View Post 456</a>
+                {Link({ href: '/about', children: 'Go to About' })}
+                {Link({ href: '/users/123', children: 'View User 123' })}
+                {Link({ href: '/posts/456', children: 'View Post 456' })}
             </nav>
         </div>
     );
@@ -51,7 +41,7 @@ function AboutPage() {
         <div className="page">
             <h1>About Page</h1>
             <p>This is a reactive routing example for Fuse.</p>
-            <button onClick={() => router.navigate('/')}>Back to Home</button>
+            {Link({ href: '/', children: 'Back to Home' })}
         </div>
     );
 }
@@ -68,7 +58,7 @@ function UserPage() {
                 console.log('API Result:', result);
             }}>Fetch User Data</button>
             <br /><br />
-            <button onClick={() => router.navigate('/')}>Back to Home</button>
+            {Link({ href: '/', children: 'Back to Home' })}
         </div>
     );
 }
@@ -88,7 +78,7 @@ function PostPage() {
                 console.log('API Result:', result);
             }}>Fetch Comments</button>
             <br /><br />
-            <button onClick={() => router.navigate('/')}>Back to Home</button>
+            {Link({ href: '/', children: 'Back to Home' })}
         </div>
     );
 }
@@ -98,7 +88,7 @@ function NotFoundPage() {
         <div className="page">
             <h1>404 - Not Found</h1>
             <p>{() => `Page "${router.currentPath.value}" not found`}</p>
-            <button onClick={() => router.navigate('/')}>Go Home</button>
+            {Link({ href: '/', children: 'Go Home' })}
         </div>
     );
 }
@@ -110,6 +100,12 @@ const routes: Record<string, () => Node> = {
     "/posts/:postId": PostPage,
 };
 
+const routeMatches = Object.keys(routes).map(path => ({
+    path,
+    match: router.match(path),
+    component: routes[path]
+}));
+
 function RouterView() {
     return (
         <div className="router-view">
@@ -118,9 +114,8 @@ function RouterView() {
             </div>
             
             {() => {
-                for (const path in routes) {
-                    const match = router.match(path);
-                    if (match.value) return routes[path]();
+                for (const route of routeMatches) {
+                    if (route.match.value) return route.component();
                 }
                 return NotFoundPage();
             }}
@@ -134,10 +129,10 @@ function App() {
             <header>
                 <h1>Fuse Router Demo</h1>
                 <nav className="main-nav">
-                    <button onClick={() => router.navigate('/')}>Home</button>
-                    <button onClick={() => router.navigate('/about')}>About</button>
-                    <button onClick={() => router.navigate('/users/42')}>User 42</button>
-                    <button onClick={() => router.navigate('/posts/999')}>Post 999</button>
+                    {Link({ href: '/', children: 'Home' })}
+                    {Link({ href: '/about', children: 'About' })}
+                    {Link({ href: '/users/42', children: 'User 42' })}
+                    {Link({ href: '/posts/999', children: 'Post 999' })}
                     <button onClick={() => router.back()}>← Back</button>
                     <button onClick={() => router.forward()}>Forward →</button>
                 </nav>
