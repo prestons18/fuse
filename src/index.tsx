@@ -1,3 +1,4 @@
+/** @jsx h */
 import { h, render, For } from "./fuse/dom";
 import { signal, computed, onCleanup } from "./fuse/reactivity";
 
