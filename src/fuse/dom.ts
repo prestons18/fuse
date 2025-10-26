@@ -70,7 +70,7 @@ function mountChild(parent: Node, child: Children, anchor?: Node): void {
   parent.insertBefore(node, anchor || null);
 }
 
-function setAttribute(el: HTMLElement, key: string, value: any): void {
+function setAttribute(el: HTMLElement | SVGElement, key: string, value: any): void {
   if (key.startsWith("on")) {
     const event = key.slice(2).toLowerCase();
     el.addEventListener(event, value);
@@ -81,8 +81,15 @@ function setAttribute(el: HTMLElement, key: string, value: any): void {
   if (typeof value === "function") {
     const dispose = effect(() => {
       const resolved = value();
-      if (key === "className") {
-        el.className = resolved;
+      if (key === "className" || key === "class") {
+        if (el instanceof SVGElement) {
+          el.setAttribute('class', resolved);
+        } else {
+          el.className = resolved;
+        }
+      } else if (el instanceof SVGElement) {
+        // For SVG elements, always use setAttribute to avoid read-only property errors
+        el.setAttribute(key, String(resolved));
       } else if (key in el) {
         (el as any)[key] = resolved;
       } else {
@@ -93,14 +100,28 @@ function setAttribute(el: HTMLElement, key: string, value: any): void {
     return;
   }
   
-  if (key === "className") {
-    el.className = value;
+  if (key === "className" || key === "class") {
+    if (el instanceof SVGElement) {
+      el.setAttribute('class', value);
+    } else {
+      (el as HTMLElement).className = value;
+    }
+  } else if (el instanceof SVGElement) {
+    // For SVG elements, always use setAttribute to avoid read-only property errors
+    el.setAttribute(key, String(value));
   } else if (key in el) {
     (el as any)[key] = value;
   } else {
     el.setAttribute(key, String(value));
   }
 }
+
+const SVG_TAGS = new Set([
+  'svg', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon',
+  'ellipse', 'g', 'text', 'tspan', 'defs', 'use', 'symbol',
+  'marker', 'clipPath', 'mask', 'pattern', 'linearGradient',
+  'radialGradient', 'stop', 'image', 'foreignObject'
+]);
 
 export function h(
   type: ElementType,
@@ -117,7 +138,9 @@ export function h(
     return fragment;
   }
   
-  const el = document.createElement(type);
+  const el = SVG_TAGS.has(type)
+    ? document.createElementNS('http://www.w3.org/2000/svg', type)
+    : document.createElement(type);
   
   if (props) {
     for (const key in props) {
