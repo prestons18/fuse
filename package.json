@@ -2,8 +2,8 @@
   "name": "fuse",
   "version": "0.0.1",
   "description": "",
-  "main": "dist/index.js",
-  "types": "dist/types/index.d.ts",
+  "main": "dist/fuse/index.js",
+  "types": "dist/types/fuse/index.d.ts",
   "scripts": {
     "dev": "npm run build -- --watch",
     "build": "tsc && node build.mjs",

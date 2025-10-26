@@ -3,7 +3,7 @@ import { build, context } from "esbuild";
 const isWatchMode = process.argv.includes("--watch");
 
 const options = {
-    entryPoints: ["src/index.ts"],
+    entryPoints: ["src/index.tsx"],
     bundle: true,
     outfile: "dist/index.js",
     format: "esm",

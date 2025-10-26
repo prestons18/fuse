@@ -1,7 +1,7 @@
 import { effect } from "./reactivity";
 
-type Child = Node | string | number | boolean | null | undefined;
-type Children = Child | Child[] | (() => Child | Child[]);
+export type Child = Node | string | number | boolean | null | undefined;
+export type Children = Child | Child[] | (() => Child | Child[]);
 type Props = Record<string, any> & { children?: Children };
 type Component<P = any> = (props: P) => Node | Node[];
 type ElementType = string | Component | null;
@@ -131,9 +131,41 @@ export function h(
   return el;
 }
 
-export function render(vnode: Node | Node[], container: HTMLElement): void {
-  const nodes = Array.isArray(vnode) ? vnode : [vnode];
-  container.replaceChildren(...nodes);
+export function render(vnode: Children, container: HTMLElement | null): void {
+  if (!container) throw new Error("Container element not found");
+  
+  // Handle null/undefined/false
+  if (vnode == null || vnode === false) {
+    container.replaceChildren();
+    return;
+  }
+  
+  // Handle functions
+  if (typeof vnode === "function") {
+    const result = vnode();
+    render(result, container);
+    return;
+  }
+  
+  // Handle arrays
+  if (Array.isArray(vnode)) {
+    const nodes = vnode.flatMap((child: Child) => {
+      if (child == null || child === false) return [];
+      if (typeof child === "function") {
+        const result = (child as () => Child | Child[])();
+        if (result instanceof Node) return result;
+        if (Array.isArray(result)) return result.filter(n => n instanceof Node);
+        return [];
+      }
+      return child instanceof Node ? child : document.createTextNode(String(child));
+    });
+    container.replaceChildren(...nodes);
+    return;
+  }
+  
+  // Handle single node or primitive
+  const node = vnode instanceof Node ? vnode : document.createTextNode(String(vnode));
+  container.replaceChildren(node);
 }
 
 export function For<T>({ each, children }: ForProps<T>): Node {
