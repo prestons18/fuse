@@ -1,7 +1,9 @@
 import { build, context } from "esbuild";
 
+const isWatchMode = process.argv.includes("--watch");
+
 const options = {
-    entryPoints: ["src/routing-example.tsx"],
+    entryPoints: ["src/index.ts"],
     bundle: true,
     outfile: "dist/index.js",
     format: "esm",
@@ -12,9 +14,11 @@ const options = {
     jsxImportSource: "./src/fuse",
     platform: "browser",
     minify: false,
+    external: ['react', 'react-dom'],
+    logLevel: "info"
 };
 
-if (process.argv.includes("--watch")) {
+if (isWatchMode) {
     const ctx = await context(options);
     await ctx.watch();
     await ctx.serve({
