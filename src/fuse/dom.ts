@@ -74,6 +74,7 @@ function setAttribute(el: HTMLElement, key: string, value: any): void {
   if (key.startsWith("on")) {
     const event = key.slice(2).toLowerCase();
     el.addEventListener(event, value);
+    addDisposer(el, () => el.removeEventListener(event, value));
     return;
   }
   
