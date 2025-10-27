@@ -71,6 +71,13 @@ function mountChild(parent: Node, child: Children, anchor?: Node): void {
 }
 
 function setAttribute(el: HTMLElement | SVGElement, key: string, value: any): void {
+  if (key === "ref") {
+    if (typeof value === "function") {
+      value(el);
+    }
+    return;
+  }
+  
   if (key.startsWith("on")) {
     const event = key.slice(2).toLowerCase();
     el.addEventListener(event, value);
