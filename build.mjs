@@ -1,7 +1,7 @@
 import { build, context } from "esbuild";
 
 const isWatchMode = process.argv.includes("--watch");
-const isProd = process.env.NODE_ENV === "production";
+const isProd = process.env.NODE_ENV === "production" || process.argv.includes("--prod");
 
 const options = {
     entryPoints: ["src/index.tsx"],
