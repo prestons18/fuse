@@ -1,6 +1,41 @@
 let currentEffect: (() => void) | null = null;
 let currentCleanups: (() => void)[] = [];
 
+// Batch update system
+let isBatchingUpdates = false;
+let pendingEffects = new Set<() => void>();
+
+export function batch<T>(fn: () => T): T {
+  const wasBatching = isBatchingUpdates;
+  isBatchingUpdates = true;
+  
+  try {
+    const result = fn();
+    
+    if (!wasBatching) {
+      isBatchingUpdates = false;
+      flushPendingEffects();
+    }
+    
+    return result;
+  } catch (error) {
+    if (!wasBatching) {
+      isBatchingUpdates = false;
+      pendingEffects.clear();
+    }
+    throw error;
+  }
+}
+
+function flushPendingEffects() {
+  const effects = Array.from(pendingEffects);
+  pendingEffects.clear();
+  
+  for (const effect of effects) {
+    effect();
+  }
+}
+
 export function effect(fn: () => void): () => void {
     let cleanups: (() => void)[] = [];
     
@@ -54,7 +89,14 @@ export function signal<T>(initialValue: T): Signal<T> {
 
     const write = (v: T) => {
         value = v;
-        subscribers.forEach((fn) => fn());
+        
+        if (isBatchingUpdates) {
+            // Queue subscribers for later execution
+            subscribers.forEach(fn => pendingEffects.add(fn));
+        } else {
+            // Execute subscribers immediately
+            subscribers.forEach(fn => fn());
+        }
     };
 
     // This is callable, but also has get/set methods

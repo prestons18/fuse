@@ -4,9 +4,9 @@ const isWatchMode = process.argv.includes("--watch");
 const isProd = process.env.NODE_ENV === "production" || process.argv.includes("--prod");
 
 const options = {
-    entryPoints: ["src/index.tsx"],
+    entryPoints: ["src/routing-example.tsx"],
     bundle: true,
-    outfile: "dist/index.js",
+    outdir: "dist",
     format: "esm",
     target: ["esnext"],
     sourcemap: !isProd,
@@ -15,6 +15,8 @@ const options = {
     jsxImportSource: "./src/fuse",
     platform: "browser",
     minify: isProd,
+    splitting: true,
+    chunkNames: "chunks/[name]-[hash]",
     external: ['react', 'react-dom'],
     logLevel: "info"
 };
