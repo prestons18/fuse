@@ -1,6 +1,7 @@
 import { build, context } from "esbuild";
 
 const isWatchMode = process.argv.includes("--watch");
+const isProd = process.env.NODE_ENV === "production";
 
 const options = {
     entryPoints: ["src/index.tsx"],
@@ -8,12 +9,12 @@ const options = {
     outfile: "dist/index.js",
     format: "esm",
     target: ["esnext"],
-    sourcemap: true,
+    sourcemap: !isProd,
     jsxFactory: "h",
     jsxFragment: "Fragment",
     jsxImportSource: "./src/fuse",
     platform: "browser",
-    minify: false,
+    minify: isProd,
     external: ['react', 'react-dom'],
     logLevel: "info"
 };
