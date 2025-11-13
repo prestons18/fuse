@@ -1,6 +1,6 @@
 {
   "name": "@prestonarnold/fuse",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "",
   "main": "dist/fuse/index.js",
   "types": "dist/types/fuse/index.d.ts",
