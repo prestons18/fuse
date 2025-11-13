@@ -4,7 +4,7 @@ const isWatchMode = process.argv.includes("--watch");
 const isProd = process.env.NODE_ENV === "production" || process.argv.includes("--prod");
 
 const options = {
-    entryPoints: ["src/routing-example.tsx"],
+    entryPoints: ["src/fuse/index.ts"],
     bundle: true,
     outdir: "dist",
     format: "esm",
