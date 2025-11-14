@@ -8,7 +8,6 @@
     "dev": "npm run build -- --watch",
     "build": "tsc && node build.mjs",
     "build:production": "tsc && node build.mjs --prod",
-    "postinstall": "npm run build",
     "type-check": "tsc --noEmit",
     "test": "echo \"np compliance\""
   },
