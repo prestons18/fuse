@@ -30,6 +30,6 @@
     "isolatedModules": true,
     "resolveJsonModule": true
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "src/index.tsx", "src/routing-example.tsx"]
+  "include": ["src/fuse/**/*.ts", "src/fuse/**/*.tsx"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }
