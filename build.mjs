@@ -4,7 +4,7 @@ const isWatchMode = process.argv.includes("--watch");
 const isProd = process.env.NODE_ENV === "production" || process.argv.includes("--prod");
 
 const options = {
-    entryPoints: ["src/fuse/index.ts"],
+    entryPoints: ["src/index.tsx"],
     bundle: true,
     outdir: "dist",
     format: "esm",
@@ -14,6 +14,11 @@ const options = {
     jsxFragment: "Fragment",
     jsxImportSource: "./src/fuse",
     platform: "browser",
+    loader: {
+        ".ts": "ts",
+        ".tsx": "tsx",
+        ".css": "css"
+    },
     minify: isProd,
     splitting: true,
     chunkNames: "chunks/[name]-[hash]",
