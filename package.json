@@ -1,6 +1,6 @@
 {
   "name": "@prestonarnold/fuse",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A lightweight JSX framework that uses fine-grained reactivity, similar to Solid.",
   "main": "dist/fuse/index.js",
   "types": "dist/types/fuse/index.d.ts",
