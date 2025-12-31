@@ -4,10 +4,12 @@
   "description": "A lightweight JSX framework that uses fine-grained reactivity, similar to Solid.",
   "main": "dist/fuse/index.js",
   "types": "dist/types/fuse/index.d.ts",
+  "type": "module",
   "scripts": {
-    "dev": "npm run build -- --watch",
-    "build": "tsc && node build.mjs",
-    "build:production": "tsc && node build.mjs --prod",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:production": "tsc && vite build --mode production",
+    "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "test": "echo \"np compliance\""
   },
@@ -15,8 +17,8 @@
   "author": "Preston Arnold",
   "license": "ISC",
   "devDependencies": {
-    "esbuild": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "vite": "latest"
   },
   "files": [
     "dist"
